@@ -1,0 +1,105 @@
+.TH KJV 1 2022-02-22 GN.TH KJV 1 2022-02-22 GNUU
+
+.SH NAME
+kjv \- The King James Bible
+
+.SH SYNOPSIS
+.B kjv
+[\fIOPTION\fR]...
+[\fISCRIPTURE\fR]...
+
+.SH DESCRIPTION
+.B kjv
+displays and searches The King James Bible and concordance
+
+.SH OPTIONS
+.TP
+.BR \-h ", " \-\-help
+displays this help information
+.TP
+.BR \-p ", " \-\-print
+force printing to stdout
+.TP
+.BR \-l ", " \-\-less
+force output to less
+.TP
+.BR \-r ", " \-\-prepend-references
+prepends full citations to each verse
+.TP
+.BR \-t ", " \-\-no-titles
+output passage without headers or footers
+.TP
+.BR \-T ", " \-\-text-only
+output passage without any headers, footers, or verse citations of any kind
+.TP
+.BR \-w ", " \-\-unwrap
+do not wrap lines in less
+.TP
+.BR \-n ", " \-\-strongs-numbers
+display Strong's numbers
+.TP
+.BR \-s ", " \-\-search [\fIquery\fR]
+search \fIscripture\fR for \fIquery\fR, unless \fIscripture\fR is not specified, in which case the entire bible is querried
+.TP
+.BR \-d ", " \-\-dictionary [\fIquery\fR]
+search a dictionary of all words in the bible for \fIquery\fR
+
+.SH SCRIPTURE ARGS
+.TP
+.BR \fIbook\fR
+specifies a book of the bible
+.TP
+.BR \fIchapter\fR
+specifies a chapter of the given book
+.TP
+.BR \fIverse\fR
+specifies a verse of the given chapter
+.TP
+.BR \fIrange\fR
+specifies the final verse in a range defined by the inital given verse
+
+.SH EXAMPLES
+.SS Reading
+Scripture can be read by simply passing the relevant arguments to 
+.B kjv
+.TP 
+.B kjv genesis 
+will display the entire book of genesis
+.TP
+.B kjv genesis 1
+will display Genesis 1
+.TP
+.B kjv genesis 1 1
+will display Genesis 1:1
+.TP
+.B kjv genesis 1 1 5
+will display Genesis 1:1-5
+.SS Searching
+Using the search function will search the specified scripture for the query provided. Omitting any scripture args will search the entire bible.
+.TP
+.B kjv genesis -s beginning
+will return all occurences of the english word "beginning" in the book of Genesis
+.TP
+.B kjv -s beginning
+will return all occurences of the english word "beginning" in the entire bible, that is, the english word that was translated from the original Hebrew or Greek.
+.TP
+.B kjv -s H7225
+will return all occurences of the Hebrew word for "beginning" in the entire bible. The index "H7225" is a Strong's number and can be displayed in any text by passing the -n option.
+.SS Dictionary
+A dictionary containing every Hebrew and Greek word in the bible can be searched directly using an associated index, called a Strong's number, or indirectly with an english string.
+.TP
+.B kjv -d H7225
+will return the definition of the Hebrew word "re-shiyth", meaning "beginning"
+.SS Tab Completion
+Tab completions can be used to complete names of books, available chapters in a given book, available verses in a given chapter, and available range after a given verse within the given chapter. Additionally, Strong's numbers can be completed by specifying a verse in which word occurs.
+.TP
+.B kjv genesis 1 1 -d
+hitting <tab> at this point will generate the words in the verse in the order in which they occur, and complete the chosen word's associated Strong's number.
+.P
+To search a passage of scripture with a completed Strong's number, first specifiy the verse and complete the number, then replace the source passage with the passage within which you would like to search. If none is specified, the entire bible will be searched. 
+
+.SH AUTHOR
+Andrew Collier
+
+.SH SEE ALSO
+\fBzsh\fR(1), \fBless\fR(1)

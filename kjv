@@ -1,0 +1,130 @@
+#!/bin/zsh
+
+helpfile=$(cat <<EOF
+hello
+EOF
+)
+
+# Locations
+datadir="/usr/local/lib"
+kja="$datadir/kjv.arr"
+txt="$datadir/kjv.tsv"
+
+# Options
+zparseopts -E -D -A opts \
+	h=flag -help=flag \
+	p=flag -print=flag \
+	l=flag -less=flag \
+	r=flag -prepend-references=flag\
+	T=flag -text-only=flag \
+	t=flag -no-titles=flag \
+	w=flag -unwrap=flag \
+	n=flag -strongs-numbers=flag \
+	s:=query -search:=query \
+	d:=query -dictionary:=query
+
+for flag in ${flag[@]}
+do
+	case $flag in
+		-h|--help) echo $helpfile && exit 0;;
+		-l|--less) pager="less";;
+		-n|--strongs-numbers) nums="cat";;
+		-p|--print) pager="cat";;
+		-r|--prepend-references) wrap=_fullref;trim="cat";title="cat";;
+		-T|--text-only) trim=_trim_all;;
+		-t|--no-titles) title="cat";;
+		-w|--unwrap) wrap=_unwrap;pageropts+="-S";;
+	esac
+done
+
+# Passage type logic gate and variable assignment
+[          -z $1 ] && passage_type="help"
+[ ! -z $query[1] ] && passage_type="all"
+[        ! -z $1 ] && passage_type="book"    && book=$1 
+[        ! -z $2 ] && passage_type="chapter" && chap=$2 
+[        ! -z $3 ] && passage_type="verse"   && vrs1=$3 
+[        ! -z $4 ] && passage_type="range"   && vrs2=$4 
+
+# Bookname variable assignment
+bks=( $(awk -F'%' '{print $1}' "$kja") )
+books=( $(awk -F'%'  '{print $2}' "$kja") )
+bk=${bks[${books[(ie)$1]}]}
+longbook="$(awk -F'%' '$1 ~ /^'$bk'/ {print $3}' "$kja")"
+
+# Formatting functions
+
+_rmnums() { sed 's/_.....//g' }
+
+_fullref() { sed 's/^\(...\).\([0-9]\+\).\([0-9]\+\).\(.*\)/[\1 \2:\3]\t\4/g' }
+
+_trim_all() { sed 's/^.*\t//g' }
+
+_default_trim() { sed 's/^[0-9]*://g' }
+
+_unwrap() { awk 'BEGIN { FS = "\t" } { print($2":"$3"\t"$4) }' }
+
+_wrap() {
+	export KJV_MAX_WIDTH=$(tput cols);
+	awk 'BEGIN \
+	{ FS = "\t" }
+	{ MAX_WIDTH = (ENVIRON["KJV_MAX_WIDTH"])}
+	function printverse(word_count, characters_printed) {
+		word_count = split($4, words, " ")
+		printf($2":"$3"\t")
+		for (i=1; i <= word_count; i++) {
+			if (characters_printed + length(words[i]) + (characters_printed > 0 ? 1 : 0 ) > MAX_WIDTH - 8) {
+				printf("\n\t")
+				characters_printed = 0
+			}
+			if (characters_printed > 0) {
+				printf(" ")
+				characters_printed++
+			}
+			printf("%s", words[i])
+			characters_printed += length(words[i])
+			}
+			printf("\n")
+		}
+	printverse()'
+}
+
+# Passage generation function assignment
+case $passage_type in
+	"help")
+		echo "Try kjv --help or man kjv" && exit 0
+		;;
+	"range")
+		_passage() { awk '$1 ~ /^'$bk'/ && $2 == '$chap' && $3 <= '$vrs2' && $3 >= '$vrs1' { print $0 }' $txt }
+		_title() { awk '{print $0} END {print toupper( "\n('$book' '$chap':'$vrs1'-'$vrs2')" )}' } 
+		;;
+	"verse")
+		_passage() { awk '$1 ~ /^'$bk'/ && $2 == '$chap' && $3 == '$vrs1' { print $0 }' $txt };
+		_title() { awk '{print $0} END {print toupper( "\n('$book' '$chap':'$vrs1')" )}' };
+		_default_trim() { cut -f 2- };
+		;;
+	"chapter")
+		_passage() { awk '$1 ~ /^'$bk'/ && $2 == '$chap' { print $0 }' $txt }
+		_title() { awk 'BEGIN {print toupper( "'$book' chapter '$chap'"); print '\n'} {print $0}' }
+		;;
+	"book")
+		_passage() { awk '$1 ~ /^'$bk'/ { print $0 }' $txt }
+		_title() { awk 'BEGIN {print "'$longbook'";print '\n'} {print $0}' }
+		_default_trim() { cat }
+		;;
+	"all")
+		_passage() { cat $txt }
+		;;
+esac
+
+# Output
+case $query[1] in
+	-d|--dictionary)
+		[ $(grep -woi "$opts" "$datadir/dic.txt" | wc -l) -gt 30 ] && pager="less" && pageropt+="-NSi" ;
+		grep -wi $opts "$datadir/dic.txt" | ${pager:=cat} $pageropt;;
+	-s|--search)
+		[ $(_passage | grep -i $opts | wc -l ) -gt 30 ] && pager="less" && pageropt+="-NSi";
+		_passage | grep -i $opts | ${nums:=_rmnums} | _fullref | ${pager=cat} $pageropt;;
+	*)
+		[ -z $pager ] && [ $(_passage | wc -l ) -gt 30 ] && pager="less" && pageropt+="-i"
+		_passage | ${nums:=_rmnums} | ${wrap:=_wrap} | ${trim:=_default_trim} | ${title:=_title} | ${pager=cat} $pageropt;;
+esac

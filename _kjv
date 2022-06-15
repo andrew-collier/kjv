@@ -1,0 +1,107 @@
+#compdef _kjv kjv
+datadir="/usr/local/lib"
+txt="$datadir/kjv.tsv"
+ot_raw=( $(awk -F '%' '{print $2}' "$datadir/kjv.arr" | head -n 39) )
+nt_raw=( $(awk -F '%' '{print $2}' "$datadir/kjv.arr" | tail -n 27) )
+ot_pretty=( 'Genesis' 'Exodus' 'Leviticus' 'Numbers' 'Deuteronomy' 'Joshua' 'Judges' 'Ruth' '1st Samuel' '2nd Samuel' '1st Kings' '2nd Kings' '1st Chronicles' '2nd Chronicles' 'Ezra' 'Nehemiah' 'Esther' 'Job' 'Psalms' 'Proverbs' 'Ecclesiastes' 'Song of Solomon' 'Isaiah' 'Jeremiah' 'Lamentations' 'Ezekiel' 'Daniel' 'Hosea' 'Joel' 'Amos' 'Obadiah' 'Jonah' 'Micah' 'Nahum' 'Habakkuk' 'Zephaniah' 'Haggai' 'Zechariah' 'Malachi' )
+nt_pretty=( 'Matthew' 'Mark' 'Luke' 'John' 'Acts' 'Romans' '1st Corinthians' '2nd Corinthians' 'Galtians' 'Ephesians' 'Philippians' 'Colossians' '1st Thessalonians' '2nd Thessalonians' '1st Timothy' '2nd Timothy' 'Titus' 'Philemon' 'Hebrews' 'James' '1st Peter' '2nd Peter' '1st John' '2nd John' '3rd John' 'Jude' 'Revelation' )
+
+_book()
+{
+	_describe -V -t values 'Old Testiment' ot_pretty ot_raw -M 'm:{[:lower:]}={[:upper:]}' -V OT 
+	_describe -V -t values 'New Testiment' nt_pretty nt_raw -M 'm:{[:lower:]}={[:upper:]}' -V NT
+
+
+	_chapter()
+	{
+		bk=$(awk -F '%' '$2=="'$line[1]'" {print $1}' "$datadir/kjv.arr")
+		_wanted -V values expl 'chapter' compadd $(\
+			for x in $(eval echo {1..$(($(\
+				awk '$1 == "'$bk'" {print $2}' $txt |\
+			   	tail -n 1 \
+				)))})
+			do echo $x
+			done);
+	
+	
+		_verse()
+		{
+			_wanted -V values expl 'verse' compadd $(\
+				for x in $(eval echo {1..$(($(\
+					awk '$1 == "'$bk'" && $2 == '$line[2]'' $txt |\
+					wc -l \
+					)))})
+				do echo $x
+				done);
+
+			
+			_range()
+			{
+				_wanted -V values expl 'through' compadd $(\
+					for x in $(eval echo {$(($line[3] + 1))..$(($(\
+						awk '$1 == "'$bk'" && $2 == '$line[2]'' $txt | wc -l \
+						)))})
+					do echo $x
+					done);
+			}
+		}
+	}
+}
+
+_strongs()
+{
+	_extraction () {
+			awk ' \
+			$1 == "'$(awk -F '%' '$2=="'$line[1]'" {print $1}' "$datadir/kjv.arr")'" && \
+			$2 == '$line[2]' && \
+			$3 == '$line[3]' { \
+				s = ""; \
+				for (i = 4; i <= NF; i++) \
+					if ($i ~ /_/) print $i}' $txt | \
+			sed 's/\([A-Z|a-z]*_....\)/\1/g'
+		}
+
+
+	local -a s_wrds=( $( _extraction | awk -F '_' '{print $1}') )
+	local -a s_nums=( $( _extraction | awk -F '_' '{print $2}') )
+
+	_describe -V -t values 'Strongs words' s_wrds s_nums -M 'm:{[:lower:]}={[:upper:]}'
+}
+
+
+_scripture()
+	{
+	typeset -A opt_args
+	_arguments -C -s -w : \
+		'(-p --print -l --less -r --prepend-references -t --text-only -w --unwrap -n --strongs-numbers -s --search -c --concordance -d --dictionary)-h[Display help file]' \
+		'(-p --print -l --less -r --prepend-references -t --text-only -w --unwrap -n --strongs-numbers -s --search -c --concordance -d --dictionary)--help[Display help file]' \
+		'(-h --help -l --less)-p[Print to stdout]' \
+		'(-h --help -l --less)--print[Print to stdout]' \
+	    '(-h --help -p --print)-l[Output to less]' \
+		'(-h --help -p --print)--less[Output to less]' \
+		'(-h --help -T --text-only)-r[Prepend full references to each line]' \
+		'(-h --help -T --text-only)--prepend-references[Prepend full references to each line]' \
+		'(-h --help -T --text-only)-t[Remove titles]' \
+		'(-h --help -T --text-only)--no-titles[Remove titles]' \
+		'(-h --help -t --no-titles)-T[Display text only]' \
+		'(-h --help -t --no-titles)--text-only[Display text only]' \
+		'(-h --help -s --search -c --concordance)-w[Unwrap lines in pager]' \
+		'(-h --help -s --search -c --concordance)--unwrap[Unwrap lines in pager]' \
+		'(-h --help)-n[Display strongs numbers]' \
+		'(-h --help)--strongs-numbers[Display strongs numbers]' \
+		'(-h --help)-s+[Search specified passage]: :->strongs' \
+		'(-h --help)--search[Search specified passage]: :->strongs' \
+		'(-h --help)-d+[Dictionary lookup]: :->strongs' \
+		'(-h --help)--dictionary[Dictionary lookup]: :->strongs' \
+		'1: :_book' \
+		'2: :_chapter' \
+		'3: :_verse'\
+		'4: :_range'
+	case $state in
+		strongs)
+			[[ -n $line[3] ]] && _strongs || _message "Verse needed for Strong's words completion";;
+	esac
+	}
+
+
+_scripture
