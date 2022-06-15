@@ -9,5 +9,4 @@ install -Dm 444 "./kjv.arr" "/usr/local/lib/kjv.arr"
 install -Dm 444 "./dic.txt" "/usr/local/lib/dic.txt"
 install -Dm 444 "./kjv.1" "/usr/local/man/man1/kjv.1"
 install -Dm 444 "./_kjv" "/usr/share/zsh/functions/Completion/Unix/_kjv"
-#compinit
 mandb -q
