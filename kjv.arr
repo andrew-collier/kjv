@@ -4,7 +4,7 @@ LEV%leviticus%The Third Book of Moses, called\nLEVITICUS
 NUM%numbers%Numbers%The Fourth Book of Moses, called\nNUMBERS
 DEU%deuteronomy%Deuteronomy%The Fifth Book of Moses, called\nDEUTERONOMY
 JOS%joshua%The Book of JOSHUA
-JUD%judges%The Book of JUDGES
+JDG%judges%The Book of JUDGES
 RUT%ruth%The Book of RUTH
 1SA%1samuel%'%The First Book of SAMUEL,\notherwise called the First Book of the Kings
 2SA%2samuel%'%The Second Book of SAMUEL,\notherwise called the Second Book of the Kings
@@ -62,5 +62,5 @@ JAM%james%The General Epistle of JAMES
 1JO%1john%John%The First Epistle General of JOHN
 2JO%2john%John%The Second Epistle of JOHN
 3JO%3john%John%The Third Epistle of JOHN
-JDG%jude%The General Epistle of JUDE
+JUD%jude%The General Epistle of JUDE
 REV%revelation%The REVELATION of St. John the Divine
