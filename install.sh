@@ -1,5 +1,5 @@
 #!/bin/zsh
-echo "Checking dependencies..."
+
 [ ! $(which zsh) ] && echo "Missing dependency \"zsh\"" && exit 1
 [ ! $(which less) ] && echo "Missing dependency \"less\"" && exit 1
 
